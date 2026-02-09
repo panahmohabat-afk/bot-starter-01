@@ -1,15 +1,10 @@
-README.md
-.gitignore
-bot.py
-pyTelegramBotAPI
-pip install pyTelegramBotAPI
-cd مسیر_پروژه
-pip install pyTelegramBotAPI
+# ======= نصب کتابخانه‌ها (در ترمینال یا Replit اجرا شود) =======
+# pip install pyTelegramBotAPI telethon
+
 import telebot
 from telebot import types
-from telethon import TelegramClient
+from telethon.sync import TelegramClient
 from telethon.errors import UserNotParticipantError
-import asyncio
 
 # ======= تنظیمات ربات =======
 TOKEN = "7739644433:AAGvaNWwMHiyaYzor9gI7Dqyp8JuX3BA_as"
@@ -18,16 +13,18 @@ bot = telebot.TeleBot(TOKEN)
 CHANNEL_LINK = "https://t.me/+WmmdDIB3Pz9jZTE0"
 GROUP_LINK   = "https://t.me/+bTD7ilyVMek0ZjI0"
 
-# ======= Telethon برای چک عضویت =======
-api_id = 1234567             # ← جایگزین کن با api_id خودت
-api_hash = "API_HASH_تو"     # ← جایگزین کن با api_hash خودت
+# ======= تنظیمات Telethon =======
+api_id = 1234567          # ← جایگزین کن با api_id واقعی
+api_hash = "API_HASH_تو"  # ← جایگزین کن با api_hash واقعی
+
 client = TelegramClient('session', api_id, api_hash)
 
-# ======= فایل کاربران =======
+# ======= فایل ذخیره کاربران =======
 USERS_FILE = "users.txt"
-ADMIN_ID = 123456789         # ← شناسه مدیر
+ADMIN_ID = 123456789       # ← شناسه مدیر تلگرام
 
 def add_user(user_id):
+    """افزودن کاربر به فایل"""
     with open(USERS_FILE, "a+") as f:
         f.seek(0)
         users = f.read().splitlines()
@@ -48,10 +45,8 @@ WELCOME_TEXT = (
 # ======= منوی کاربران =======
 def main_menu():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn1 = types.KeyboardButton("✅ #عضو_کانال_شدم")
-    btn2 = types.KeyboardButton("⚙️ تنظیمات گروه")
-    markup.add(btn1)
-    markup.add(btn2)
+    markup.add("✅ #عضو_کانال_شدم")
+    markup.add("⚙️ تنظیمات گروه")
     return markup
 
 # ======= منوی مدیر =======
@@ -73,39 +68,55 @@ def handle_buttons(message):
 
     # ==== چک عضویت کانال ====
     if message.text == "✅ #عضو_کانال_شدم":
-        async def check_member():
-            await client.start()
-            try:
-                participant = await client.get_participant(CHANNEL_LINK, user_id)
-                if participant:
-                    add_user(user_id)
-                    bot.send_message(
-                        message.chat.id,
-                        f"🎉 عالی! تو عضو کانال هستی. حالا می‌تونی وارد گروه بشی:\n{GROUP_LINK}",
-                        reply_markup=main_menu()
-                    )
-                else:
-                    bot.send_message(message.chat.id, "❌ هنوز عضو کانال نشدی! لطفاً ابتدا عضو شو و دوباره بزن ✅")
-            except UserNotParticipantError:
-                bot.send_message(message.chat.id, "❌ هنوز عضو کانال نشدی! لطفاً ابتدا عضو شو و دوباره بزن ✅")
-        asyncio.run(check_member())
+        try:
+            with client:  # استفاده از Telethon sync
+                participant = client.get_participant(CHANNEL_LINK, user_id)
+            add_user(user_id)
+            bot.send_message(
+                message.chat.id,
+                f"🎉 عالی! تو عضو کانال هستی. حالا می‌تونی وارد گروه بشی:\n{GROUP_LINK}",
+                reply_markup=main_menu()
+            )
+        except UserNotParticipantError:
+            bot.send_message(
+                message.chat.id,
+                "❌ هنوز عضو کانال نشدی! لطفاً ابتدا عضو شو و دوباره بزن ✅"
+            )
+        except Exception as e:
+            bot.send_message(
+                message.chat.id,
+                f"❌ خطا در بررسی عضویت: {e}"
+            )
 
     # ==== تنظیمات گروه ====
     elif message.text == "⚙️ تنظیمات گروه":
         if user_id == ADMIN_ID:
-            bot.send_message(message.chat.id, "🔧 منوی مدیریتی باز شد:", reply_markup=admin_menu())
+            bot.send_message(
+                message.chat.id,
+                "🔧 منوی مدیریتی باز شد:",
+                reply_markup=admin_menu()
+            )
         else:
-            bot.send_message(message.chat.id, "🔒 فقط مدیر می‌تواند وارد تنظیمات شود!")
+            bot.send_message(
+                message.chat.id,
+                "🔒 فقط مدیر می‌تواند وارد تنظیمات شود!"
+            )
 
     # ==== آمار کاربران ====
     elif message.text == "📊 آمار کاربران" and user_id == ADMIN_ID:
         with open(USERS_FILE, "r") as f:
             users = f.read().splitlines()
-        bot.send_message(user_id, f"👥 تعداد کاربران ثبت شده: {len(users)}")
+        bot.send_message(
+            user_id,
+            f"👥 تعداد کاربران ثبت شده: {len(users)}"
+        )
 
     # ==== ارسال پیام گروه ====
     elif message.text == "📝 ارسال پیام گروه" and user_id == ADMIN_ID:
-        bot.send_message(user_id, "لطفا پیام خود را بفرستید. هر پیام بعدی برای همه کاربران ارسال می‌شود.")
+        bot.send_message(
+            user_id,
+            "لطفا پیام خود را بفرستید. هر پیام بعدی برای همه کاربران ارسال می‌شود."
+        )
 
         @bot.message_handler(func=lambda m: m.from_user.id == ADMIN_ID)
         def broadcast_message(m):
@@ -115,11 +126,17 @@ def handle_buttons(message):
                         bot.send_message(uid, f"📣 پیام مدیر:\n{m.text}")
                     except:
                         continue
-            bot.send_message(ADMIN_ID, "✅ پیام با موفقیت ارسال شد!")
+            bot.send_message(
+                ADMIN_ID,
+                "✅ پیام با موفقیت ارسال شد!"
+            )
 
     # ==== پیام نامعتبر ====
     else:
-        bot.send_message(message.chat.id, "لطفا از دکمه‌های منو استفاده کن ✅")
+        bot.send_message(
+            message.chat.id,
+            "⚠️ لطفا فقط از دکمه‌های منو استفاده کنید!"
+        )
 
 # ======= اجرای ربات =======
 print("Bot is running...")
