@@ -1,2 +1,4 @@
-# bot-starter-01
-شروع پروژه ربات تلگرام از صفر
+README.md
+.gitignore
+bot.py
+pip install pyTelegramBotAPI.
