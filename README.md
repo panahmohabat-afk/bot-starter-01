@@ -1,4 +1,4 @@
-# ======= نصب کتابخانه‌ها (در ترمینال یا Replit اجرا شود) =======
+# ======= نصب کتابخانه‌ها =======
 # pip install pyTelegramBotAPI telethon
 
 import telebot
@@ -14,8 +14,8 @@ CHANNEL_LINK = "https://t.me/+WmmdDIB3Pz9jZTE0"
 GROUP_LINK   = "https://t.me/+bTD7ilyVMek0ZjI0"
 
 # ======= تنظیمات Telethon =======
-api_id = 1234567          # ← جایگزین کن با api_id واقعی
-api_hash = "API_HASH_تو"  # ← جایگزین کن با api_hash واقعی
+api_id = 1234567          # ← جایگزین با api_id واقعی
+api_hash = "API_HASH_تو"  # ← جایگزین با api_hash واقعی
 
 client = TelegramClient('session', api_id, api_hash)
 
