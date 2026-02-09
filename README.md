@@ -1,3 +1,4 @@
+
 # ======= نصب کتابخانه‌ها =======
 # pip install pyTelegramBotAPI telethon
 
@@ -16,7 +17,6 @@ GROUP_LINK   = "https://t.me/+bTD7ilyVMek0ZjI0"
 # ======= تنظیمات Telethon =======
 api_id = 1234567          # ← جایگزین با api_id واقعی
 api_hash = "API_HASH_تو"  # ← جایگزین با api_hash واقعی
-
 client = TelegramClient('session', api_id, api_hash)
 
 # ======= فایل ذخیره کاربران =======
@@ -59,7 +59,7 @@ def admin_menu():
 # ======= شروع ربات =======
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, WELCOME_TEXT)
+    bot.send_message(message.chat.id, WELCOME_TEXT, reply_markup=main_menu())
 
 # ======= مدیریت دکمه‌ها =======
 @bot.message_handler(func=lambda message: True)
@@ -69,7 +69,7 @@ def handle_buttons(message):
     # ==== چک عضویت کانال ====
     if message.text == "✅ #عضو_کانال_شدم":
         try:
-            with client:  # استفاده از Telethon sync
+            with client:
                 participant = client.get_participant(CHANNEL_LINK, user_id)
             add_user(user_id)
             bot.send_message(
@@ -134,8 +134,8 @@ def handle_buttons(message):
     # ==== پیام نامعتبر ====
     else:
         bot.send_message(
-            message.chat.id,
-            "⚠️ لطفا فقط از دکمه‌های منو استفاده کنید!"
+            chat_id=message.chat.id,
+            text="⚠️ لطفا فقط از دکمه‌های منو استفاده کنید!"
         )
 
 # ======= اجرای ربات =======
