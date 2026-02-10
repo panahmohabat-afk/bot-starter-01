@@ -6,7 +6,7 @@ from telegram.ext import Updater, CommandHandler
 TOKEN = "7739644433:AAGvaNWwMHiyaYzor9gI7Dqyp8JuX3BA_as"
 
 def start(update, context):
-    update.message.reply_text("ربات وصل شد ✅")
+    update.message.reply_text("ربات وصله ✅")
 
 def main():
     updater = Updater(TOKEN, use_context=True)
