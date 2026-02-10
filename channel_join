@@ -1,4 +1,4 @@
-# نصب کتابخانه:
+# نصب:
 # pip install python-telegram-bot==13.15
 
 from telegram.ext import Updater, CommandHandler
@@ -20,3 +20,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+    pip install python-telegram-bot==13.15
+    
+python bot.py
