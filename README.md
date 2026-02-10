@@ -1,143 +1,39 @@
+# ======================================================
+# Bot حرفه‌ای چک عضویت کانال | بدون دکمه، آماده اجرا
+# ======================================================
 
 # ======= نصب کتابخانه‌ها =======
-# pip install pyTelegramBotAPI telethon
+# قبل از اجرای ربات در ترمینال این دستور را اجرا کنید:
+# pip install python-telegram-bot --upgrade
 
-import telebot
-from telebot import types
-from telethon.sync import TelegramClient
-from telethon.errors import UserNotParticipantError
+import telegram
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
-# ======= تنظیمات ربات =======
-TOKEN = "7739644433:AAGvaNWwMHiyaYzor9gI7Dqyp8JuX3BA_as"
-bot = telebot.TeleBot(TOKEN)
+# ===== توکن ربات و کانال =====
+TOKEN = '7739644433:AAGvaNWwMHiyaYzor9gI7Dqyp8JuX3BA_as'
+CHANNEL = '@YourChannelName'  # ← نام کانال خودت را اینجا بزار
 
-CHANNEL_LINK = "https://t.me/+WmmdDIB3Pz9jZTE0"
-GROUP_LINK   = "https://t.me/+bTD7ilyVMek0ZjI0"
-
-# ======= تنظیمات Telethon =======
-api_id = 1234567          # ← جایگزین با api_id واقعی
-api_hash = "API_HASH_تو"  # ← جایگزین با api_hash واقعی
-client = TelegramClient('session', api_id, api_hash)
-
-# ======= فایل ذخیره کاربران =======
-USERS_FILE = "users.txt"
-ADMIN_ID = 123456789       # ← شناسه مدیر تلگرام
-
-def add_user(user_id):
-    """افزودن کاربر به فایل"""
-    with open(USERS_FILE, "a+") as f:
-        f.seek(0)
-        users = f.read().splitlines()
-        if str(user_id) not in users:
-            f.write(f"{user_id}\n")
-
-# ======= متن خوش‌آمدگویی =======
-WELCOME_TEXT = (
-    "🌸 سلام دوست شاعر من! 🌸\n\n"
-    "خوش آمدی به ربات پناه 🕊️\n\n"
-    "برای فعال شدن ربات و استفاده از امکاناتش، ابتدا باید عضو کانال ما بشی:\n"
-    f"🔗 کانال: {CHANNEL_LINK}\n\n"
-    "بعد از عضویت، دکمه زیر رو بزن:\n"
-    "✅ #عضو_کانال_شدم\n\n"
-    "🎭 با ما در مسیر شعر و موسیقی همراه شو!"
-)
-
-# ======= منوی کاربران =======
-def main_menu():
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("✅ #عضو_کانال_شدم")
-    markup.add("⚙️ تنظیمات گروه")
-    return markup
-
-# ======= منوی مدیر =======
-def admin_menu():
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("📊 آمار کاربران", "📝 ارسال پیام گروه")
-    markup.add("⚙️ تنظیمات گروه")
-    return markup
-
-# ======= شروع ربات =======
-@bot.message_handler(commands=['start'])
-def start(message):
-    bot.send_message(message.chat.id, WELCOME_TEXT, reply_markup=main_menu())
-
-# ======= مدیریت دکمه‌ها =======
-@bot.message_handler(func=lambda message: True)
-def handle_buttons(message):
-    user_id = message.from_user.id
-
-    # ==== چک عضویت کانال ====
-    if message.text == "✅ #عضو_کانال_شدم":
-        try:
-            with client:
-                participant = client.get_participant(CHANNEL_LINK, user_id)
-            add_user(user_id)
-            bot.send_message(
-                message.chat.id,
-                f"🎉 عالی! تو عضو کانال هستی. حالا می‌تونی وارد گروه بشی:\n{GROUP_LINK}",
-                reply_markup=main_menu()
-            )
-        except UserNotParticipantError:
-            bot.send_message(
-                message.chat.id,
-                "❌ هنوز عضو کانال نشدی! لطفاً ابتدا عضو شو و دوباره بزن ✅"
-            )
-        except Exception as e:
-            bot.send_message(
-                message.chat.id,
-                f"❌ خطا در بررسی عضویت: {e}"
-            )
-
-    # ==== تنظیمات گروه ====
-    elif message.text == "⚙️ تنظیمات گروه":
-        if user_id == ADMIN_ID:
-            bot.send_message(
-                message.chat.id,
-                "🔧 منوی مدیریتی باز شد:",
-                reply_markup=admin_menu()
-            )
-        else:
-            bot.send_message(
-                message.chat.id,
-                "🔒 فقط مدیر می‌تواند وارد تنظیمات شود!"
-            )
-
-    # ==== آمار کاربران ====
-    elif message.text == "📊 آمار کاربران" and user_id == ADMIN_ID:
-        with open(USERS_FILE, "r") as f:
-            users = f.read().splitlines()
-        bot.send_message(
-            user_id,
-            f"👥 تعداد کاربران ثبت شده: {len(users)}"
+# ===== دستور start =====
+def start(update, context):
+    user_id = update.effective_user.id
+    member = context.bot.get_chat_member(CHANNEL, user_id)
+    
+    if member.status not in ['member', 'administrator', 'creator']:
+        # اگر عضو نیست پیام بده
+        update.message.reply_text(
+            f'برای استفاده از ربات باید عضو کانال {CHANNEL} باشید!\nلطفاً عضو شوید و دوباره امتحان کنید.'
         )
-
-    # ==== ارسال پیام گروه ====
-    elif message.text == "📝 ارسال پیام گروه" and user_id == ADMIN_ID:
-        bot.send_message(
-            user_id,
-            "لطفا پیام خود را بفرستید. هر پیام بعدی برای همه کاربران ارسال می‌شود."
-        )
-
-        @bot.message_handler(func=lambda m: m.from_user.id == ADMIN_ID)
-        def broadcast_message(m):
-            with open(USERS_FILE, "r") as f:
-                for uid in f.read().splitlines():
-                    try:
-                        bot.send_message(uid, f"📣 پیام مدیر:\n{m.text}")
-                    except:
-                        continue
-            bot.send_message(
-                ADMIN_ID,
-                "✅ پیام با موفقیت ارسال شد!"
-            )
-
-    # ==== پیام نامعتبر ====
     else:
-        bot.send_message(
-            chat_id=message.chat.id,
-            text="⚠️ لطفا فقط از دکمه‌های منو استفاده کنید!"
-        )
+        update.message.reply_text('به ربات خوش آمدید! شما عضو کانال هستید.')
 
-# ======= اجرای ربات =======
-print("Bot is running...")
-bot.infinity_polling()
+# ===== اجرای ربات =====
+def main():
+    updater = Updater(TOKEN, use_context=True)
+    dp = updater.dispatcher
+    dp.add_handler(CommandHandler('start', start))
+    updater.start_polling()
+    updater.idle()
+
+# ===== شروع برنامه =====
+if __name__ == "__main__":
+    main()
